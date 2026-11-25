@@ -1,0 +1,86 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isAdmin() {
+      return signedIn() && exists(/databases/$(database)/documents/adminUsers/$(request.auth.uid));
+    }
+    function isOwner() {
+      return isAdmin() && get(/databases/$(database)/documents/adminUsers/$(request.auth.uid)).data.role == 'owner';
+    }
+    function isRoomHost(roomId) {
+      return isAdmin() && get(/databases/$(database)/documents/gameRooms/$(roomId)).data.hostUid == request.auth.uid;
+    }
+
+    match /adminUsers/{userId} {
+      allow get: if signedIn() && (request.auth.uid == userId || isOwner());
+      allow list: if isOwner();
+      allow create: if signedIn()
+        && request.auth.uid == userId
+        && request.resource.data.role == 'admin'
+        && request.resource.data.email == request.auth.token.email
+        && exists(/databases/$(database)/documents/invites/$(request.auth.token.email))
+        && get(/databases/$(database)/documents/invites/$(request.auth.token.email)).data.email == request.auth.token.email;
+      allow update, delete: if isOwner();
+    }
+
+    match /invites/{email} {
+      allow get: if isOwner() || (signedIn() && request.auth.token.email == email);
+      allow list: if isOwner();
+      allow create, delete: if isOwner();
+      allow update: if false;
+    }
+
+    match /questions/{questionId} {
+      allow read, create, update, delete: if isAdmin();
+    }
+
+    match /gameRooms/{roomId} {
+      allow get, list: if signedIn();
+      allow create: if isAdmin() && request.resource.data.hostUid == request.auth.uid
+        && !('correct' in request.resource.data.questionSet[0]);
+      allow update, delete: if isRoomHost(roomId);
+
+      match /answerKeys/{keyId} {
+        allow get: if isRoomHost(roomId);
+        allow list: if false;
+        allow create, update: if isRoomHost(roomId);
+        allow delete: if isRoomHost(roomId);
+      }
+
+      match /players/{playerId} {
+        allow create: if signedIn()
+          && get(/databases/$(database)/documents/gameRooms/$(roomId)).data.status == 'waiting'
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.nickname is string
+          && request.resource.data.nickname.size() > 0
+          && request.resource.data.nickname.size() <= 24;
+        allow get, list: if signedIn();
+        allow update, delete: if isRoomHost(roomId);
+      }
+
+      match /answers/{answerId} {
+        // O ID da resposta inclui jogador + número da pergunta. O campo playerId
+        // identifica o documento do participante na subcoleção players.
+        allow create: if signedIn()
+          && request.resource.data.playerId is string
+          && exists(/databases/$(database)/documents/gameRooms/$(roomId)/players/$(request.resource.data.playerId))
+          && get(/databases/$(database)/documents/gameRooms/$(roomId)/players/$(request.resource.data.playerId)).data.uid == request.auth.uid
+          && get(/databases/$(database)/documents/gameRooms/$(roomId)).data.status == 'playing'
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.questionIndex is int
+          && request.resource.data.questionIndex == get(/databases/$(database)/documents/gameRooms/$(roomId)).data.currentQuestionIndex
+          && request.resource.data.selectedIndex is int
+          && request.resource.data.selectedIndex >= 0
+          && request.resource.data.selectedIndex <= 3
+          && request.resource.data.answeredAt is timestamp
+          && request.time >= get(/databases/$(database)/documents/gameRooms/$(roomId)).data.questionStartedAt + duration.value(10, 's')
+          && request.time < get(/databases/$(database)/documents/gameRooms/$(roomId)).data.questionStartedAt + duration.value(25, 's');
+        allow get: if signedIn() && (resource.data.uid == request.auth.uid || isRoomHost(roomId));
+        allow list: if isRoomHost(roomId);
+        allow update: if false;
+        allow delete: if isRoomHost(roomId);
+      }
+    }
+  }
+}

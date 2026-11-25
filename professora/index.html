@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Painel da professora | EcoQuiz ADM</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <a class="brand" href="../index.html">🌱 EcoQuiz <b>ADM</b></a>
+  <a class="back" href="../index.html">← Voltar ao início</a>
+</header>
+<main>
+  <section class="panel auth-panel" id="authPanel">
+    <h1>Acesso ao painel</h1>
+    <p>Entre com sua conta ou crie uma conta usando um convite da administradora principal.</p>
+    <div class="auth-tabs">
+      <button type="button" class="tab active" id="showLogin">Entrar</button>
+      <button type="button" class="tab" id="showRegister">Aceitar convite</button>
+    </div>
+    <form id="loginForm">
+      <label for="loginEmail">E-mail</label>
+      <input id="loginEmail" type="email" autocomplete="username" required>
+      <label for="loginPassword">Senha</label>
+      <input id="loginPassword" type="password" autocomplete="current-password" required>
+      <button class="primary" type="submit">Entrar</button>
+    </form>
+    <form id="registerForm" hidden>
+      <label for="registerEmail">E-mail que recebeu o convite</label>
+      <input id="registerEmail" type="email" autocomplete="email" required>
+      <label for="registerPassword">Crie uma senha (mínimo de 6 caracteres)</label>
+      <input id="registerPassword" type="password" minlength="6" autocomplete="new-password" required>
+      <button class="primary" type="submit">Criar conta e aceitar convite</button>
+    </form>
+    <p id="authMessage" class="message" role="status"></p>
+  </section>
+
+  <div id="adminContent" hidden>
+    <section class="intro">
+      <div><small>ÁREA ADMINISTRATIVA</small><h1>Banco de perguntas</h1><p>Cadastre, organize e reutilize perguntas nos seus jogos.</p></div>
+      <div class="counter"><b id="count">0</b><span>perguntas salvas</span></div>
+    </section>
+
+    <section class="panel" id="teamPanel" hidden>
+      <div class="section-title-row"><div><h2>Gerenciar administradores</h2><p>Convide colaboradores para ajudar a alimentar o banco de perguntas.</p></div><span class="role-tag">ADMINISTRADORA PRINCIPAL</span></div>
+      <form id="inviteForm" class="invite-form">
+        <div><label for="inviteEmail">E-mail do colaborador</label><input id="inviteEmail" type="email" placeholder="colaborador@exemplo.com" required></div>
+        <button class="primary" type="submit">Gerar convite</button>
+      </form>
+      <p class="hint">O convite é criado no sistema, mas o envio do e-mail é manual nesta versão gratuita. Compartilhe com a pessoa o endereço do site e informe que ela deve usar exatamente esse e-mail em “Aceitar convite”.</p>
+      <div id="inviteResult" class="invite-result" hidden></div>
+      <h3 class="list-title">Convites pendentes</h3>
+      <div id="inviteList"></div>
+      <h3 class="list-title">Administradores</h3>
+      <div id="memberList"></div>
+    </section>
+
+    <section class="panel" id="roomCreatePanel">
+      <div class="section-title-row"><div><h2>Criar sala de jogo</h2><p>Abra uma sala com PIN para os alunos entrarem pelo celular.</p></div></div>
+      <label for="roomQuestionCount">Quantidade de perguntas nesta partida</label>
+      <select id="roomQuestionCount"><option value="5">5 perguntas</option><option value="10">10 perguntas</option><option value="15">15 perguntas</option><option value="all">Todas as perguntas</option></select>
+      <button class="primary" id="createRoom" type="button">Criar sala e gerar PIN</button>
+      <p id="roomMessage" class="message" role="status"></p>
+    </section>
+
+    <section class="panel">
+      <h2 id="formTitle">Nova pergunta</h2>
+      <p>Adicione o enunciado e quatro alternativas.</p>
+      <form id="questionForm">
+        <label for="statement">Enunciado da pergunta</label>
+        <textarea id="statement" required placeholder="Ex.: Qual símbolo indica que uma embalagem pode ser reciclada?"></textarea>
+        <div class="subhead"><h3>Alternativas</h3><small>Escolha uma resposta correta.</small></div>
+        <div id="options" class="grid"></div>
+        <div class="actions">
+          <button type="button" id="cancelEdit" class="light" hidden>Cancelar edição</button>
+          <button class="primary" id="saveQuestion" type="submit">Salvar pergunta</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <div class="section-title-row"><div><h2>Perguntas cadastradas</h2><p>Gerencie as perguntas que já foram criadas.</p></div><button id="logout" class="light" type="button">Sair</button></div>
+      <div id="questionList"></div>
+      <div id="emptyState" class="empty">📚<b>Nenhuma pergunta cadastrada ainda</b><span>As perguntas salvas aparecerão aqui.</span></div>
+    </section>
+    <footer>As perguntas e imagens pequenas são armazenadas no Cloud Firestore. Esta versão não utiliza Firebase Storage, que exige upgrade de plano.</footer>
+  </div>
+</main>
+<script type="module" src="script.js"></script>
+</body>
+</html>
